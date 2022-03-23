@@ -78,7 +78,7 @@ public:
 		for( int i=0; i<4; i++ )
 		{
 			buf2[i] = buf[i];
-			value |= ( buf2[i] << (3-i)*8 );  // OU logique + décalage vers la droite de 24, 16, 8, 0
+			value |= ( buf2[i] << (3-i)*8 );  // décalage vers la gauche de 24, 16, 8, 0 et OU logique pour insérer dans le mot 32 bits
 		}
         _index++;
 		std::cout << "lecture de " << std::hex << value << '\n';
@@ -123,7 +123,6 @@ int main( int argc, char** argv )
 
 	size_t c=0;
 	char buf[4];
-	uint32_t value;
 	do
 	{
 		c++;
