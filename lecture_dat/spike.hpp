@@ -10,10 +10,11 @@ class Spike
 public:
 	static size_t s_index; ///< spike index
 	static size_t s_frame; ///< frame index
+	bool   _frameHasChanged{false};
+	size_t _frame; ///< frame index
 
 private:
 	size_t _index; ///< spike index
-	size_t _frame; ///< frame index
 
 	size_t _posX, _posY;
 	bool   _polarity;
@@ -52,6 +53,7 @@ public:
         {
 			Spike::s_frame++;      // Moving to next frame
 			Spike::s_index = 0;
+			_frameHasChanged = true;
         }
 		_frame = Spike::s_frame;
 

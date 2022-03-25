@@ -30,6 +30,8 @@ lecture de ca366101
 */
 
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 
 #include "spike.hpp"
 /**
@@ -52,11 +54,26 @@ lecture de ca366101
 \endverbatim
 */
 
+std::ofstream openOutputDataFile( std::string fname )
+{
+	std::ofstream fout( fname );
+	if( !fout.is_open() )
+	{
+		std::cout << "Error: failed to open output file '" << fname << "'\n";
+		std::exit(2);
+	}
+	return fout;
+}
 
-
-/// arg1: nom fichier, arg2 (optionnel): nombre de spikes à lire
+/// Lecture de fichier dat
+/**
+- arg1: nom fichier
+- arg2 (optionnel): nombre de spikes à lire ou 'a' pour 'all': lecture de tout le fichier
+- arg3 (optionnel): 0 ou 1. Si 1, alors les spikes sont sauvegardés dans des fichiers par frame dans un sous dossier "data" (0 par défaut)
+*/
 int main( int argc, char** argv )
 {
+	int fn_index_width = 5;
 	if( argc < 2 )
 	{
 		std::cout << "Error: missing filename\n";
@@ -64,7 +81,7 @@ int main( int argc, char** argv )
 	}
 	size_t nbSpikes{5};
 	bool readAll{false};
-	if( argc == 3 )
+	if( argc > 2 )
 	{
 		if( std::string{ argv[2]} == "a" ) // read all
 			readAll = true;
@@ -77,6 +94,13 @@ int main( int argc, char** argv )
 	else
 		std::cout << "- attempt reading " << nbSpikes << " spikes\n";
 
+	bool saveSeparateFiles{false};
+	if( argc > 3 )
+	{
+		if( std::atoi( argv[3] ) == 1 )
+			saveSeparateFiles = true;
+	}
+
 	std::ifstream f( argv[1], std::ios::binary );
     if( !f.is_open() )
 	{
@@ -87,11 +111,23 @@ int main( int argc, char** argv )
 	std::ofstream fout( "out.dat" );
 	if( !fout.is_open() )
 	{
-		std::cout << "Error: failed to open output file\n";
+		std::cout << "Error: failed to open output file out.dat\n";
 		return 2;
 	}
 
+	std::ofstream fout2;
+	if( saveSeparateFiles )
+	{
+		fout2.open( "data/out_0.dat" );
+		if( !fout2.is_open() )
+		{
+			std::cout << "Error: failed to open output file data/out_0.dat\n";
+			return 3;
+		}
+	}
+
 	fout << "# frame;index;orientation;x;y\n";
+	fout2 << "# frame;index;orientation;x;y\n";
 
 
 	size_t c=0;
@@ -103,13 +139,14 @@ int main( int argc, char** argv )
 //		std::cout << "buf" <<
 		Spike sp( buf );
 		fout << sp;
-		if( sp._frameHasChanged )
+		if( sp._frameHasChanged && saveSeparateFiles )
 		{
             fout2.close();
             std::ostringstream ssfn;
-            ssfn << "data/out_" << std::setw(5) << set::setf('0') << sp._frame;
+            ssfn << "data/out_" << std::setw(5) << std::setfill('0') << sp._frame;
             fout2.open( ssfn.str() );
 		}
+		fout2 << sp;
 	}
 	while( (c != nbSpikes | readAll) && !f.eof() );
 
