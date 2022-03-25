@@ -66,7 +66,7 @@ int main( int argc, char** argv )
 	bool readAll{false};
 	if( argc == 3 )
 	{
-		if( std::string{argv[2]} == "a" ) // read all
+		if( std::string{ argv[2]} == "a" ) // read all
 			readAll = true;
 		else
 			nbSpikes = std::atoi( argv[2] );
@@ -93,15 +93,28 @@ int main( int argc, char** argv )
 
 	fout << "# frame;index;orientation;x;y\n";
 
+
 	size_t c=0;
 	char buf[4];
 	do
 	{
 		c++;
 		f.read( buf, 4 );
+//		std::cout << "buf" <<
 		Spike sp( buf );
 		fout << sp;
+		if( sp._frameHasChanged )
+		{
+            fout2.close();
+            std::ostringstream ssfn;
+            ssfn << "data/out_" << std::setw(5) << set::setf('0') << sp._frame;
+            fout2.open( ssfn.str() );
+		}
 	}
-	while( c != nbSpikes && !f.eof() );
-	fout << "# end, read " << c << " spikes\n";
+	while( (c != nbSpikes | readAll) && !f.eof() );
+
+	fout << "# end, read " << c << " spikes in " << Spike::s_frame << " frames\n";
+
+	std::cout << "- read " << c << " spikes in " << Spike::s_frame << " frames\n";
+
 }

@@ -24,6 +24,7 @@
 		</Compiler>
 		<Unit filename="Makefile" />
 		<Unit filename="lecture1.cpp" />
+		<Unit filename="lecture2.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
