@@ -29,9 +29,9 @@ lecture de ca366101
 => ça me parait pas très cohérent...
 */
 
-#include <iostream>
 #include <fstream>
 
+#include "spike.hpp"
 /**
 \verbatim
     Stockage du spike sous la forme d'un mot de 32 bits:
@@ -52,54 +52,7 @@ lecture de ca366101
 \endverbatim
 */
 
-using uchar = unsigned char;
 
-class Spike
-{
-private:
-	static size_t _index; ///< index du spike
-	size_t _frameIndex;   ///< préliminaire, pas utilisé ici
-	size_t _posX,_posY;
-
-public:
-	Spike( char* buf )
-	{
-		std::cout << "Spike bytes: " << std::hex;
-		for( int i=0; i<4; i++ )
-			std::cout << (0xff&buf[i]) << '-'; // masquage pour l'affichage uniquement
-		std::cout << '\n';
-
-/*		for( int i=0; i<4; i++ )
-			std::cout << std::dec << i << ":" << (3-i)*8 << ":" << std::hex <<(int32_t(buf[i]) << ((3-i)*8)) << '-';
-		std::cout << '\n';
-*/
-		uint32_t value = 0;
-		unsigned char buf2[4];
-		for( int i=0; i<4; i++ )
-		{
-			buf2[i] = buf[i];
-			value |= ( buf2[i] << (3-i)*8 );  // décalage vers la gauche de 24, 16, 8, 0 et OU logique pour insérer dans le mot 32 bits
-		}
-        _index++;
-		std::cout << "lecture de " << std::hex << value << '\n';
-/// x: bit 16 à 6: 0000 0000 0000 0001 1111 1111 1100 0000 = 0x00.01.FF.c0
-        _posX = value & 0x0001ffc0; // masquage
-        _posX = _posX >> 6; // décalage
-
-/// y: bit 27 à 17: 0000 1111 1111 1110 0000 0000 0000 0000 = 0x0F.FE.00.00
-        _posY = value & 0x0FFE0000; // masquage
-        _posY = _posY >> 17; // décalage
-	}
-
-	friend std::ostream& operator << ( std::ostream& f, Spike sp )
-	{
-		f << std::dec << sp._index << ": x,y="
-			<< sp._posX << "," << sp._posY << '\n';
-		return f;
-	}
-};
-
-size_t Spike::_index = 0;
 
 /// arg1: nom fichier, arg2 (optionnel): nombre de spikes à lire
 int main( int argc, char** argv )
@@ -109,17 +62,36 @@ int main( int argc, char** argv )
 		std::cout << "Error: missing filename\n";
 		return 1;
 	}
-	size_t nbSpikes = 5;
+	size_t nbSpikes{5};
+	bool readAll{false};
 	if( argc == 3 )
-		nbSpikes = std::atoi( argv[2] );
-	std::cout << " - reading " << nbSpikes << " spikes\n";
+	{
+		if( std::string{argv[2]} == "a" ) // read all
+			readAll = true;
+		else
+			nbSpikes = std::atoi( argv[2] );
+	}
+
+	if( readAll )
+		std::cout << "- reading whole file\n";
+	else
+		std::cout << "- attempt reading " << nbSpikes << " spikes\n";
 
 	std::ifstream f( argv[1], std::ios::binary );
     if( !f.is_open() )
 	{
-		std::cout << "Error: failed to open file\n";
+		std::cout << "Error: failed to open input file " << argv[1] << '\n';
 		return 1;
 	}
+
+	std::ofstream fout( "out.dat" );
+	if( !fout.is_open() )
+	{
+		std::cout << "Error: failed to open output file\n";
+		return 2;
+	}
+
+	fout << "# frame;index;orientation;x;y\n";
 
 	size_t c=0;
 	char buf[4];
@@ -128,7 +100,8 @@ int main( int argc, char** argv )
 		c++;
 		f.read( buf, 4 );
 		Spike sp( buf );
-		std::cout << sp;
+		fout << sp;
 	}
 	while( c != nbSpikes && !f.eof() );
+	fout << "# end, read " << c << " spikes\n";
 }
