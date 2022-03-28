@@ -1,6 +1,6 @@
 /**
 \file
-\brief import du code Yumain
+\brief tentative d'import du code Yumain
 */
 
 #include <fstream>
@@ -12,12 +12,12 @@
 
 //#include "mainwindow.h"
 //#include "ui_mainwindow.h"
-
+#if 1
 struct YumainQt
 {
 	int extractVal(int val, int a, int b);
 //	int* SpikeDecode(QByteArray Data);
-	int* SpikeDecode(uint8_t* Data);
+	int* SpikeDecode(char* Data);
 	bool readNextFrame( std::ifstream& );
 };
 /*
@@ -55,7 +55,7 @@ int YumainQt::extractVal(int val, int a, int b)
     return (r & val) >> (a);
 }
 
-int* YumainQt::SpikeDecode(uint8_t* Data)
+int* YumainQt::SpikeDecode(char* Data)
 {
     int* ListeSpike = new int[6];
 
@@ -95,8 +95,8 @@ bool YumainQt::readNextFrame( std::ifstream& dataFile )
 //            qDebug() << "new frame";
                 std::cout << "newFrame 1\n";
 
-			uint8_t d = data;
-            int* Spike = SpikeDecode(d);
+//			uint8_t d = data;
+            int* Spike = SpikeDecode(data);
 
             if (Spike[2] == 1) //Display Image
             {
@@ -132,7 +132,7 @@ bool YumainQt::readNextFrame( std::ifstream& dataFile )
 }
 
 
-
+#endif
 int main( int argc, char** argv )
 {
 	if( argc < 2 )
@@ -169,4 +169,32 @@ int main( int argc, char** argv )
 		return 2;
 	}
 
+	YumainQt yu;
+	size_t c=0;
+	char buf[4];
+	do
+	{
+		c++;
+		yu.readNextFrame( datafile );
+//		f.read( buf, 4 );
+//		std::cout << "buf" <<
+//		Spike sp( buf );
+//		fout << sp;
+/*
+		if( sp._frameHasChanged && saveSeparateFiles )
+		{
+            fout2.close();
+            std::ostringstream ssfn;
+            ssfn << "data/out_" << std::setw(5) << std::setfill('0') << sp._frame;
+            fout2.open( ssfn.str() );
+		}
+		fout2 << sp;*/
+	}
+	while( (c != nbSpikes | readAll) && !datafile.eof() );
+
+//	fout << "# end, read " << c << " spikes in " << Spike::s_frame << " frames\n";
+
+//	std::cout << std::dec << "- read " << c << " spikes in " << Spike::s_frame << " frames\n";
+
 }
+

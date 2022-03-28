@@ -155,6 +155,6 @@ int main( int argc, char** argv )
 
 	fout << "# end, read " << c << " spikes in " << Spike::s_frame << " frames\n";
 
-	std::cout << "- read " << c << " spikes in " << Spike::s_frame << " frames\n";
+	std::cout << std::dec << "- read " << c << " spikes in " << Spike::s_frame << " frames\n";
 
 }
