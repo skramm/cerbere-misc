@@ -12,11 +12,13 @@
 
 
 // globals
+/// \todo  a virer et ecrire + proprement
 
 size_t g_eventIdx = 0;
 size_t g_frameIdx = 0;
-bool g_switchFrame = false;
-char sep{' '};
+bool   g_switchFrame = false;
+char   sep{' '};  ///< datafile field separator
+bool g_saveSeparateFiles{false};
 
 struct Event
 {
@@ -42,7 +44,7 @@ struct YumainQt
 	int extractVal(int val, int a, int b);
 //	int* SpikeDecode(QByteArray Data);
 	int* SpikeDecode(char* Data);
-	bool readNextFrame( std::ifstream&, Event&, std::ofstream& );
+	bool readNextFrame( std::ifstream&, size_t&, std::ofstream& );
 };
 
 
@@ -57,7 +59,7 @@ int YumainQt::extractVal(int val, int a, int b)
 
 int* YumainQt::SpikeDecode(char* Data)
 {
-    int* ListeSpike = new int[6];
+    int* ListeSpike = new int[6]; /// SK: WTF ?
 
     uint32_t currentData = 0;
     for (int indData = 0; indData < 4; indData++)
@@ -75,47 +77,45 @@ int* YumainQt::SpikeDecode(char* Data)
     return ListeSpike;
 }
 
-bool YumainQt::readNextFrame( std::ifstream& dataFile, Event& ev, std::ofstream& fout )
+bool YumainQt::readNextFrame( std::ifstream& dataFile, size_t& nbEvent, std::ofstream& fout )
 {
-//    QRgb* colors;
-    int colors;
     bool newFrame = false;
     int readLength = 4;
-    int x, y, orientation, sign, amplitude;
 
-//    QByteArray data;
-//    uint8_t data[4];
     char data[4];
-//    image->fill(qRgb(127, 127, 127));
 
+	std::ofstream fout2;
+	if( g_saveSeparateFiles )
+	{
+		std::ostringstream ssfn;
+		ssfn << "out_data/out_" << std::setw(5) << std::setfill('0') << g_frameIdx;
+		fout2.open( ssfn.str() );
+	}
 
     while(!newFrame)
 	{
-		//            data=dataFile->read(readLength);
 		dataFile.read( data, readLength);
-		//            qDebug() << "new frame";
-		//				std::cout << "- start new Frame\n";
-
-		//			uint8_t d = data;
 		int* Spike = SpikeDecode(data);
 
 		if (Spike[2] == 1) //Display Image
 		{
+			nbEvent = g_eventIdx;
 			newFrame = true;
 			g_frameIdx++;
-			std::cout << "- switch to new Frame: " << g_frameIdx << ", previous had " << g_eventIdx << "events\n";
+			std::cout << "- switch to new Frame: " << g_frameIdx << ", previous had " << g_eventIdx << " events\n";
 			g_eventIdx = 0;
 
 		}
 		else
 		{
+			Event ev;
 			ev.x           = Spike[0];
 			ev.y           = Spike[1];
 			ev.orientation = Spike[5];
 			ev.sign        = Spike[4];
 			ev.amplitude   = Spike[3];
 
-			if(x<1920 && y<1080)
+/*			if(x<1920 && y<1080)
 			{
 				if(sign ==1)
 				{// OFF data
@@ -125,15 +125,17 @@ bool YumainQt::readNextFrame( std::ifstream& dataFile, Event& ev, std::ofstream&
 				{ //ON data
 					colors = 0; //onColor;
 				}
-			}
+			}*/
 				//                image->setPixel(x, y, colors[orientation]);
 			fout << ev;
+			fout2 << ev;
 		}
 		/*            if(data.length()<readLength)
 		{
 		return false;
 		}
 		*/
+		g_eventIdx++;
 	}
 	return true;
 }
@@ -147,6 +149,7 @@ int main( int argc, char** argv )
 		std::cout << "Error: missing filename\n";
 		return 1;
 	}
+	std::cout << "input datafile:" << argv[1] << '\n';
 	size_t nbSpikes{5};
 	bool readAll{false};
 	if( argc > 2 )
@@ -162,11 +165,10 @@ int main( int argc, char** argv )
 	else
 		std::cout << "- attempt reading " << nbSpikes << " spikes\n";
 
-	bool saveSeparateFiles{false};
 	if( argc > 3 )
 	{
 		if( std::atoi( argv[3] ) == 1 )
-			saveSeparateFiles = true;
+			g_saveSeparateFiles = true;
 	}
 
 	std::ifstream datafile( argv[1], std::ios::binary );
@@ -183,39 +185,14 @@ int main( int argc, char** argv )
 		return 2;
 	}
 
-	std::ofstream fout2;
-	if( saveSeparateFiles )
-	{
-		fout2.open( "out_data/out_0.dat" );
-		if( !fout2.is_open() )
-		{
-			std::cout << "Error: failed to open output file data/out_0.dat\n";
-			return 3;
-		}
-	}
-
 	YumainQt yu;
 	size_t c=0;
-//	char buf[4];
-	Event event;
+	size_t nbEvent=0;
 	do
 	{
-		std::cout << "main loop c=" << c << '\n';
-		c++;
-		yu.readNextFrame( datafile, event, fout );
-//		f.read( buf, 4 );
-//		std::cout << "buf" <<
-//		Spike sp( buf );
-//		fout << sp;
-
-		if( saveSeparateFiles )
-		{
-            fout2.close();
-            std::ostringstream ssfn;
-            ssfn << "out_data/out_" << std::setw(5) << std::setfill('0') << g_frameIdx;
-            fout2.open( ssfn.str() );
-		}
-		fout2 << event;
+//		std::cout << "main loop c=" << c << '\n';
+		yu.readNextFrame( datafile, nbEvent, fout );
+		c += nbEvent;
 	}
 	while( (c != nbSpikes | readAll) && !datafile.eof() );
 
