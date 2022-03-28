@@ -10,20 +10,39 @@
 
 #define qAbs std::abs
 
-//#include "mainwindow.h"
-//#include "ui_mainwindow.h"
 
 // globals
 
 size_t g_eventIdx = 0;
 size_t g_frameIdx = 0;
+bool g_switchFrame = false;
+char sep{' '};
+
+struct Event
+{
+    int x, y, orientation, sign, amplitude;
+
+	friend std::ostream& operator << ( std::ostream& f, Event sp )
+	{
+		f << std::dec
+			<< g_frameIdx << sep
+			<< g_eventIdx << sep
+			<< sp.x << sep
+			<< sp.y << sep
+			<< sp.orientation << sep
+			<< sp.sign << sep
+			<< sp.amplitude
+			<< '\n';
+		return f;
+	}
+};
 
 struct YumainQt
 {
 	int extractVal(int val, int a, int b);
 //	int* SpikeDecode(QByteArray Data);
 	int* SpikeDecode(char* Data);
-	bool readNextFrame( std::ifstream& );
+	bool readNextFrame( std::ifstream&, Event&, std::ofstream& );
 };
 
 
@@ -56,7 +75,7 @@ int* YumainQt::SpikeDecode(char* Data)
     return ListeSpike;
 }
 
-bool YumainQt::readNextFrame( std::ifstream& dataFile )
+bool YumainQt::readNextFrame( std::ifstream& dataFile, Event& ev, std::ofstream& fout )
 {
 //    QRgb* colors;
     int colors;
@@ -69,7 +88,7 @@ bool YumainQt::readNextFrame( std::ifstream& dataFile )
     char data[4];
 //    image->fill(qRgb(127, 127, 127));
 
-	char sep{' '};
+
     while(!newFrame)
 	{
 		//            data=dataFile->read(readLength);
@@ -83,17 +102,18 @@ bool YumainQt::readNextFrame( std::ifstream& dataFile )
 		if (Spike[2] == 1) //Display Image
 		{
 			newFrame = true;
-			g_eventIdx = 0;
 			g_frameIdx++;
-//	                std::cout << "- switch to new Frame: " << g_frameIdx << '\n';
+			std::cout << "- switch to new Frame: " << g_frameIdx << ", previous had " << g_eventIdx << "events\n";
+			g_eventIdx = 0;
+
 		}
 		else
 		{
-			x           = Spike[0];
-			y           = Spike[1];
-			orientation = Spike[5];
-			sign        = Spike[4];
-			amplitude   = Spike[3];
+			ev.x           = Spike[0];
+			ev.y           = Spike[1];
+			ev.orientation = Spike[5];
+			ev.sign        = Spike[4];
+			ev.amplitude   = Spike[3];
 
 			if(x<1920 && y<1080)
 			{
@@ -107,15 +127,7 @@ bool YumainQt::readNextFrame( std::ifstream& dataFile )
 				}
 			}
 				//                image->setPixel(x, y, colors[orientation]);
-			std::cout
-				<< g_frameIdx << sep
-				<< g_eventIdx++ << sep
-				<< x << sep
-				<< y << sep
-				<< colors << sep
-				<< orientation << sep
-				<< amplitude << sep
-				<< '\n';
+			fout << ev;
 		}
 		/*            if(data.length()<readLength)
 		{
@@ -150,6 +162,13 @@ int main( int argc, char** argv )
 	else
 		std::cout << "- attempt reading " << nbSpikes << " spikes\n";
 
+	bool saveSeparateFiles{false};
+	if( argc > 3 )
+	{
+		if( std::atoi( argv[3] ) == 1 )
+			saveSeparateFiles = true;
+	}
+
 	std::ifstream datafile( argv[1], std::ios::binary );
     if( !datafile.is_open() )
 	{
@@ -164,32 +183,45 @@ int main( int argc, char** argv )
 		return 2;
 	}
 
+	std::ofstream fout2;
+	if( saveSeparateFiles )
+	{
+		fout2.open( "out_data/out_0.dat" );
+		if( !fout2.is_open() )
+		{
+			std::cout << "Error: failed to open output file data/out_0.dat\n";
+			return 3;
+		}
+	}
+
 	YumainQt yu;
 	size_t c=0;
-	char buf[4];
+//	char buf[4];
+	Event event;
 	do
 	{
+		std::cout << "main loop c=" << c << '\n';
 		c++;
-		yu.readNextFrame( datafile );
+		yu.readNextFrame( datafile, event, fout );
 //		f.read( buf, 4 );
 //		std::cout << "buf" <<
 //		Spike sp( buf );
 //		fout << sp;
-/*
-		if( sp._frameHasChanged && saveSeparateFiles )
+
+		if( saveSeparateFiles )
 		{
             fout2.close();
             std::ostringstream ssfn;
-            ssfn << "data/out_" << std::setw(5) << std::setfill('0') << sp._frame;
+            ssfn << "out_data/out_" << std::setw(5) << std::setfill('0') << g_frameIdx;
             fout2.open( ssfn.str() );
 		}
-		fout2 << sp;*/
+		fout2 << event;
 	}
 	while( (c != nbSpikes | readAll) && !datafile.eof() );
 
 //	fout << "# end, read " << c << " spikes in " << Spike::s_frame << " frames\n";
 
-//	std::cout << std::dec << "- read " << c << " spikes in " << Spike::s_frame << " frames\n";
+	std::cout << std::dec << "- read " << c << " spikes in " << g_frameIdx << " frames\n";
 
 }
 

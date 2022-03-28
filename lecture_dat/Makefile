@@ -11,5 +11,5 @@ bin/%:%.cpp spike.hpp
 	$(CXX) -o $@ $<
 
 clean:
-	rm data/*
+	rm out_data/*
 
