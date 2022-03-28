@@ -35,6 +35,9 @@ lecture de ca366101
 
 #include "spike.hpp"
 /**
+
+Endianness: little endian => most significant bits last
+
 \verbatim
     Stockage du spike sous la forme d'un mot de 32 bits:
 

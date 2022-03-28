@@ -18,7 +18,7 @@ struct YumainQt
 	int extractVal(int val, int a, int b);
 //	int* SpikeDecode(QByteArray Data);
 	int* SpikeDecode(uint8_t* Data);
-	bool readNextFrame();
+	bool readNextFrame( std::ifstream& );
 };
 /*
 
@@ -75,25 +75,32 @@ int* YumainQt::SpikeDecode(uint8_t* Data)
     return ListeSpike;
 }
 
-bool YumainQt::readNextFrame()
+bool YumainQt::readNextFrame( std::ifstream& dataFile )
 {
-    QRgb* colors;
+//    QRgb* colors;
+    int colors;
     bool newFrame = false;
     int readLength = 4;
     int x, y, orientation, sign, amplitude;
-    QByteArray data;
-    image->fill(qRgb(127, 127, 127));
+
+//    QByteArray data;
+//    uint8_t data[4];
+    char data[4];
+//    image->fill(qRgb(127, 127, 127));
 
     while(!newFrame)
         {
-            data=dataFile->read(readLength);
-            qDebug() << "new frame";
+//            data=dataFile->read(readLength);
+            dataFile.read( data, readLength);
+//            qDebug() << "new frame";
+                std::cout << "newFrame 1\n";
 
-            int* Spike = SpikeDecode(data);
+			uint8_t d = data;
+            int* Spike = SpikeDecode(d);
 
             if (Spike[2] == 1) //Display Image
             {
-                qDebug() << "newFrame";
+                std::cout << "newFrame 2\n";
                 newFrame = true;
             }
             else {
@@ -106,18 +113,20 @@ bool YumainQt::readNextFrame()
                 if(x<1920 && y<1080)
                 {
                     if(sign ==1){// OFF data
-                      colors = offColor;
+                      colors = 1; //offColor;
                     }
                     else{ //ON data
-                      colors = onColor;
+                      colors = 0; //onColor;
                     }
                 }
-                image->setPixel(x, y, colors[orientation]);
+//                image->setPixel(x, y, colors[orientation]);
+				std::cout << "x,y=" << x << "," << y << " col=" << colors << '\n';
             }
-            if(data.length()<readLength)
+/*            if(data.length()<readLength)
             {
                 return false;
             }
+*/
         }
     return true;
 }
@@ -146,8 +155,8 @@ int main( int argc, char** argv )
 	else
 		std::cout << "- attempt reading " << nbSpikes << " spikes\n";
 
-	std::ifstream f( argv[1], std::ios::binary );
-    if( !f.is_open() )
+	std::ifstream datafile( argv[1], std::ios::binary );
+    if( !datafile.is_open() )
 	{
 		std::cout << "Error: failed to open input file " << argv[1] << '\n';
 		return 1;
