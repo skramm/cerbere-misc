@@ -12,7 +12,12 @@
 
 //#include "mainwindow.h"
 //#include "ui_mainwindow.h"
-#if 1
+
+// globals
+
+size_t g_eventIdx = 0;
+size_t g_frameIdx = 0;
+
 struct YumainQt
 {
 	int extractVal(int val, int a, int b);
@@ -20,30 +25,6 @@ struct YumainQt
 	int* SpikeDecode(char* Data);
 	bool readNextFrame( std::ifstream& );
 };
-/*
-
-void MainWindow::on_pushButton_pressed()
-{
-    QString fileName = QFileDialog::getOpenFileName(this,
-            tr("Load data file"), "",
-            tr("data (*.dat);;All Files (*)"));
-
-    dataFile = new QFile(fileName);
-    dataFile->open(QIODevice::ReadOnly);
-
-    dataStream = new QDataStream(dataFile);
-    dataStream->setByteOrder(QDataStream::LittleEndian);
-    currentPosFile = 1;
-
-     continueRead = true;
-     dataFile->seek(0);
-     image = new QImage(1920, 1080, QImage::Format_RGB32);
-     timer = new QTimer(this);
-     connect(timer, SIGNAL(timeout()), this, SLOT(display()));
-     timer->start(1000/currentFPS); //time specified in ms
-     readNextFrame();
-}
-*/
 
 
 int YumainQt::extractVal(int val, int a, int b)
@@ -88,51 +69,65 @@ bool YumainQt::readNextFrame( std::ifstream& dataFile )
     char data[4];
 //    image->fill(qRgb(127, 127, 127));
 
+	char sep{' '};
     while(!newFrame)
-        {
-//            data=dataFile->read(readLength);
-            dataFile.read( data, readLength);
-//            qDebug() << "new frame";
-                std::cout << "newFrame 1\n";
+	{
+		//            data=dataFile->read(readLength);
+		dataFile.read( data, readLength);
+		//            qDebug() << "new frame";
+		//				std::cout << "- start new Frame\n";
 
-//			uint8_t d = data;
-            int* Spike = SpikeDecode(data);
+		//			uint8_t d = data;
+		int* Spike = SpikeDecode(data);
 
-            if (Spike[2] == 1) //Display Image
-            {
-                std::cout << "newFrame 2\n";
-                newFrame = true;
-            }
-            else {
-                x           = Spike[0];
-                y           = Spike[1];
-                orientation = Spike[5];
-                sign        = Spike[4];
-                amplitude   = Spike[3];
+		if (Spike[2] == 1) //Display Image
+		{
+			newFrame = true;
+			g_eventIdx = 0;
+			g_frameIdx++;
+//	                std::cout << "- switch to new Frame: " << g_frameIdx << '\n';
+		}
+		else
+		{
+			x           = Spike[0];
+			y           = Spike[1];
+			orientation = Spike[5];
+			sign        = Spike[4];
+			amplitude   = Spike[3];
 
-                if(x<1920 && y<1080)
-                {
-                    if(sign ==1){// OFF data
-                      colors = 1; //offColor;
-                    }
-                    else{ //ON data
-                      colors = 0; //onColor;
-                    }
-                }
-//                image->setPixel(x, y, colors[orientation]);
-				std::cout << "x,y=" << x << "," << y << " col=" << colors << '\n';
-            }
-/*            if(data.length()<readLength)
-            {
-                return false;
-            }
-*/
-        }
-    return true;
+			if(x<1920 && y<1080)
+			{
+				if(sign ==1)
+				{// OFF data
+					colors = 1; //offColor;
+				}
+				else
+				{ //ON data
+					colors = 0; //onColor;
+				}
+			}
+				//                image->setPixel(x, y, colors[orientation]);
+			std::cout
+				<< g_frameIdx << sep
+				<< g_eventIdx++ << sep
+				<< x << sep
+				<< y << sep
+				<< colors << sep
+				<< orientation << sep
+				<< amplitude << sep
+				<< '\n';
+		}
+		/*            if(data.length()<readLength)
+		{
+		return false;
+		}
+		*/
+	}
+	return true;
 }
 
 
-#endif
+
 int main( int argc, char** argv )
 {
 	if( argc < 2 )
