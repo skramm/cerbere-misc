@@ -8,9 +8,13 @@ WIP !!!
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/highgui.hpp"
+//#include <iostream>
+//#include <fstream>
+#include "spike.hpp"
 
 int main( int argc, char** argv )
 {
+#if 0
 	auto im_h = 1000;  // arbitraire
 	auto im_w = 1600;
 	if( argc < 2 )
@@ -42,6 +46,6 @@ int main( int argc, char** argv )
 
 	cv::imwrite( "out.png", img );
 	std::cout << "- read " << c << " spikes in " << Spike::s_frame << " frames\n";
-
+#endif
 }
 

@@ -29,7 +29,7 @@ lecture de ca366101
 => ça me parait pas très cohérent...
 */
 
-#include <fstream>
+//#include <fstream>
 #include <sstream>
 #include <iomanip>
 

@@ -25,6 +25,8 @@
 		<Unit filename="Makefile" />
 		<Unit filename="lecture1.cpp" />
 		<Unit filename="lecture2.cpp" />
+		<Unit filename="lecture3.cpp" />
+		<Unit filename="spike.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
