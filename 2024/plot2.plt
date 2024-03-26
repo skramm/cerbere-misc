@@ -1,7 +1,6 @@
 #!/usr/bin/env gnuplot
 fn="Anass_metrics_data_1.csv"
 
-#set terminal pngcairo size 800,500
 
 # ----------------------------------
 # au choix, svg ou png
