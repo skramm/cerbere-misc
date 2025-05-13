@@ -7,11 +7,18 @@ ext="svg"
 set datafile separator ","
 set output "test1.".ext
 set grid
+set key top left
+
+set xrange [0:130]
 
 set style data linespoints
 set ylabel "Error value (m.)"
 set y2tics
-set y2label "Pixel Density (px/px^2)"
+
+# --- EDIT 20250513
+# set y2label "Pixel Density (px/px^2)"
+set y2label "Depth Map Density"
+# ---
 
 plot \
 	fn using 1:2 ti "MAE without DDM++" axis x1y1 \

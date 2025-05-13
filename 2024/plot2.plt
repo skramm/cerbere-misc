@@ -1,16 +1,17 @@
 #!/usr/bin/env gnuplot
 fn="Anass_metrics_data_1.csv"
 
-
 # ----------------------------------
 # au choix, svg ou png
-set terminal svg size 800,1000
+set terminal svg size 1000,700
 ext="svg"
 
 #set terminal pngcairo size 800,1000
 #ext="png"
 # ----------------------------------
 
+set xrange [0:130]
+set key left top
 
 set datafile separator ","
 set output "test1.".ext
@@ -31,33 +32,37 @@ plot \
 
 
 #-------------------------------------------------
-set title "Pixel Density (|px|/|px^2|)"
+set title "Depth Map Density" font "Helvetica,24"
+
 unset ylabel 
-unset y2label 
+
 set grid
 set logscale y
 
 set yrange [0.05:*]
-#set y2range [0:*]
+set xrange [0:13]
 set ytics nomirror
 unset y2tics
-
-#set ylabel "with DDM++"
-#set y2label "without DDM++"
-
-unset ylabel
 unset y2label
-set xlabel "# Frame"
+
+
+set xlabel "Time (s.)" font "Helvetica,18"
+set ylabel "Density (%)" font "Helvetica,18"
+
+set ytics autofreq font "Helvetica,16"
+set xtics autofreq font "Helvetica,16"
+
+set key font "Helvetica,20"
 
 set output "density.".ext
 plot \
-	fn using 1:6 ti "with DDM++" lw 2,\
-	fn using 1:7 ti "without DDM++" lw 2
+	fn using (column(1)/10.):6 ti "with DDM++" lw 3,\
+	fn using (column(1)/10.):7 ti "without DDM++" lw 3
 
 unset logscale y
 	
 #-------------------------------------------------
-set title "Ratio MAE" font "Helvetica,20"
+set title "Ratio MAE (lin)" font "Helvetica,20"
 set output "ratio_lin_mae.".ext
 plot \
 	fn using 1:(column(2)/column(7)) ti "MAE/density without DDM++" lw 2, \
@@ -70,35 +75,38 @@ plot \
 	fn using 1:(column(3)/column(7)) ti "MED/density without DDM++" lw 2, \
 	fn using 1:(column(5)/column(6)) ti "MED/density with DDM++" lw 2
 
-set terminal svg size 800,600
+#===============================================================
 
 set key left top
+set output "ratio_log_MAE.".ext
+set xrange [0:13]
+#set multiplot layout 2,1
 
-set output "ratio_log.".ext
-set terminal svg size 800,1000
-set multiplot layout 2,1
+set ylabel "MAE (m.)" font "Helvetica,18"
 
 set logscale y
 
-#set size 0.4,1
-#set origin 0,0
-set title "Ratio MAE (log)"
+set title "MAE/Density ratio"
 plot \
-	fn using 1:(column(2)/column(7)) ti "MAE/density without DDM++" lw 2, \
-	fn using 1:(column(4)/column(6)) ti "MAE/density with DDM++" lw 2
+	fn using (column(1)/10.):(column(2)/column(7)) ti "MAE/density without DDM++" lw 3, \
+	fn using (column(1)/10.):(column(4)/column(6)) ti "MAE/density with DDM++" lw 3
 
 
-set title "Ratio MED (log)"
+set output "ratio_log_MED.".ext
+
+set title "MED/Density ratio"
 set yrange [0.02:*]
 #set size 0.4,1
 #set origin 0.5,0
 #set output "ratio_log_med.".ext
+set ylabel "MED (m.)" font "Helvetica,18"
+
 plot \
-	fn using 1:(column(3)/column(7)) ti "MED/density without DDM++" lw 2, \
-	fn using 1:(column(5)/column(6)) ti "MED/density with DDM++" lw 2
+	fn using (column(1)/10.):(column(3)/column(7)) ti "MED/density without DDM++" lw 3, \
+	fn using (column(1)/10.):(column(5)/column(6)) ti "MED/density with DDM++" lw 3
 
 
-unset multiplot
+#unset multiplot
 
 
 
